@@ -13,7 +13,7 @@
             }
             stages {
 
-                stage('Clone Github') {
+                stage('Clone Intergration Source from Github') {
                     steps {
                         script {
                             deleteDir()
@@ -26,36 +26,39 @@
                 stage("Start MI Server"){
                     steps {
                         sh """
-                             docker run --name $DOCKER_CONTAINER_NAME -d -p 8280:8280 -p 9008:9008 $DOCKER_IMAGE -DsynapseTest -DsynapseTestPort=9008
+                            docker run --name $DOCKER_CONTAINER_NAME -d -p 8280:8280 -p 9008:9008 $DOCKER_IMAGE -DsynapseTest -DsynapseTestPort=9008
                         """
                     }
                 }
 
                 stage("Wait for MI Server to Start"){
                     steps {
-                        sh """                             
+                        sh """  
+                            sleep 15                           
                              while ! nc -z localhost 8280; do   
                                 sleep 1
                                 echo "Waiting for MI to start!!!"
+                             done
+                             while ! nc -z localhost 9008; do   
+                                sleep 1
+                                echo "Waiting for MI Test Port to be Open!!"
                              done
                         """
                     }
                 }
 
-                stage('Build with tests') {
+                stage('Build Source with Unit Tests') {
                     steps {
                         script {
-                            echo "Test"
+                            echo "Building Integration Source code"
                             sh """
-                            ls
-                            pwd
                             cd unittest-build-demo/WSO2API_Test_Demo
                             mvn clean install -DtestServerType=remote -DtestServerHost=localhost -DtestServerPort=9008
                             """
                     }
                 }
             }
-            stage('Deploying the Capp') {
+            stage('Deploying the Capp to Dev') {
                     steps {
                         script {
                               echo "Deploy the CApp to the development environment"                    
@@ -79,7 +82,7 @@
                     echo 'The process is successfully Completed....'
                     script {
                      try {
-                        sh "docker stop $DOCKER_CONTAINER_NAME && docker rm $DOCKER_CONTAINER_NAME"
+                       sh "docker stop $DOCKER_CONTAINER_NAME && docker rm $DOCKER_CONTAINER_NAME"
                     } catch (Exception e) {
                         echo 'Error Occuted while removing the container'
                     }
