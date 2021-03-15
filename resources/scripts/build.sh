@@ -6,8 +6,7 @@ set -e
 ##
 
 WORKSPACE="/workspace"
-SOURCE_LOCATION="/workspace/source"
-ZIP_NAME="integrations"
+SOURCE_LOCATION="/workspace//WSO2API_Test_Demo"
 
 # Functions
 function echoBold () {
@@ -25,10 +24,3 @@ echo $WSO2_SERVER_HOME
 # Build with Tests
 cd $SOURCE_LOCATION
 mvn clean install -DtestServerType=local -DtestServerPath=$WSO2_SERVER_HOME/bin/micro-integrator.sh
-
-# Create the archive
-cd $WORKSPACE
-createArchive
-chmod -R 777 $WORKSPACE
-echo "Uploading the Distribution to nexus"
-curl -f --show-error -u $NEXUS_USERNAME:$NEXUS_USER_PASSWORD --upload-file $ZIP_NAME.zip  $NEXUS_REPO_URL/$ZIP_NAME.zip

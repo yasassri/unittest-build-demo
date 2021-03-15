@@ -1,0 +1,94 @@
+    import groovy.transform.Field
+
+        // Constantants    
+        @Field final def BITBUCKET_URL = "https://github.com/yasassri/unittest-build-demo.git"
+        @Field final def DOCKER_IMAGE = "ycrnet/wso2mi-1.2.0-unittest:1.0.0"
+        @Field final def DOCKER_CONTAINER_NAME = "wso2-mi-test"
+
+
+        pipeline {
+            agent {label ''}
+            environment {
+            BUILD_TIMESTAMP = sh(script: "echo `date +%d%m%Y`", returnStdout: true).trim()
+            }
+            stages {
+
+                stage('Clone Intergration Source from Github') {
+                    steps {
+                        script {
+                            deleteDir()
+                            echo "Cloning Github repository"
+                            sh "git clone $BITBUCKET_URL"
+                        }
+                    }
+                }
+
+                stage("Start MI Server"){
+                    steps {
+                        sh """
+                            cd unittest-build-demo
+                            docker run -v ${PWD}:/workspace --workdir /workspace
+                            ${bamboo.buildDockerImage} 'sh resources/scripts/build.sh'
+                        """
+                    }
+                }
+
+                stage("Wait for MI Server to Start"){
+                    steps {
+                        sh """  
+                            sleep 15                           
+                             while ! nc -z localhost 8280; do   
+                                sleep 1
+                                echo "Waiting for MI to start!!!"
+                             done
+                             while ! nc -z localhost 9008; do   
+                                sleep 1
+                                echo "Waiting for MI Test Port to be Open!!"
+                             done
+                        """
+                    }
+                }
+
+                stage('Build Source with Unit Tests') {
+                    steps {
+                        script {
+                            echo "Building Integration Source code"
+                            sh """
+                            cd unittest-build-demo/WSO2API_Test_Demo
+                            mvn clean install -DtestServerType=remote -DtestServerHost=localhost -DtestServerPort=9008
+                            """
+                    }
+                }
+            }
+            stage('Deploying the Capp to Dev') {
+                    steps {
+                        script {
+                              echo "Deploy the CApp to the development environment"                    
+                    }
+                }
+            }
+            stage('Running JMeter Integration Tests') {
+                    steps {
+                        script {
+                            echo "Running JMeter Integration TestTestst!!!"
+                            // sh"""
+                            // sleep 10
+                            // /Users/yasassri/soft/jmeter/apache-jmeter-4.0/bin/jmeter -n -t repository/cicd/IntegrationTest.jmx -l rusults.jtl
+                            // """      
+                    }
+                }
+            }
+            }
+            post {
+                always {
+                    echo 'The process is successfully Completed....'
+                    script {
+                     try {
+                       sh "docker stop $DOCKER_CONTAINER_NAME && docker rm $DOCKER_CONTAINER_NAME"
+                    } catch (Exception e) {
+                        echo 'Error Occured while removing the container'
+                    }
+                    }
+                }
+            }
+        }
