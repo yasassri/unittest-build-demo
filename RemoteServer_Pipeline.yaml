@@ -84,7 +84,7 @@
                      try {
                        sh "docker stop $DOCKER_CONTAINER_NAME && docker rm $DOCKER_CONTAINER_NAME"
                     } catch (Exception e) {
-                        echo 'Error Occuted while removing the container'
+                        echo 'Error Occured while removing the container'
                     }
                     }
                 }
