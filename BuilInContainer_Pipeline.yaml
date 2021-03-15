@@ -12,7 +12,6 @@
             BUILD_TIMESTAMP = sh(script: "echo `date +%d%m%Y`", returnStdout: true).trim()
             }
             stages {
-
                 stage('Clone Intergration Source from Github') {
                     steps {
                         script {
@@ -25,41 +24,16 @@
 
                 stage("Start MI Server"){
                     steps {
-                        sh """
-                            cd unittest-build-demo
-                            docker run -v ${PWD}:/workspace --workdir /workspace
-                            ${bamboo.buildDockerImage} 'sh resources/scripts/build.sh'
-                        """
-                    }
-                }
-
-                stage("Wait for MI Server to Start"){
-                    steps {
-                        sh """  
-                            sleep 15                           
-                             while ! nc -z localhost 8280; do   
-                                sleep 1
-                                echo "Waiting for MI to start!!!"
-                             done
-                             while ! nc -z localhost 9008; do   
-                                sleep 1
-                                echo "Waiting for MI Test Port to be Open!!"
-                             done
-                        """
-                    }
-                }
-
-                stage('Build Source with Unit Tests') {
-                    steps {
                         script {
-                            echo "Building Integration Source code"
+                            def workspaceLocation = pwd()
                             sh """
-                            cd unittest-build-demo/WSO2API_Test_Demo
-                            mvn clean install -DtestServerType=remote -DtestServerHost=localhost -DtestServerPort=9008
+                                ls -lart
+                                docker run -v ${workspaceLocation}/unittest-build-demo/WSO2API_Test_Demo:/workspace --workdir /workspace ${DOCKER_IMAGE} 'mvn clean install -DtestServerType=local -DtestServerPath=$WSO2_SERVER_HOME/bin/micro-integrator.sh'
                             """
+                        }
+
                     }
                 }
-            }
             stage('Deploying the Capp to Dev') {
                     steps {
                         script {
@@ -78,17 +52,10 @@
                     }
                 }
             }
-            }
+        }
             post {
                 always {
                     echo 'The process is successfully Completed....'
-                    script {
-                     try {
-                       sh "docker stop $DOCKER_CONTAINER_NAME && docker rm $DOCKER_CONTAINER_NAME"
-                    } catch (Exception e) {
-                        echo 'Error Occured while removing the container'
-                    }
-                    }
                 }
             }
         }
