@@ -22,7 +22,7 @@
                     }
                 }
 
-                stage("Start MI Server"){
+                stage("Building the source within the Docker Container"){
                     steps {
                         script {
                             def workspaceLocation = pwd()
@@ -37,7 +37,10 @@
             stage('Deploying the Capp to Dev') {
                     steps {
                         script {
+                            def workspaceLocation = pwd()
+                            sh """
                             ls ${workspaceLocation}/unittest-build-demo/WSO2API_Test_Demo/WSO2API_Test_DemoCompositeExporter/target
+                            """
                             echo "Deploy the CApp to the development environment"                    
                     }
                 }
