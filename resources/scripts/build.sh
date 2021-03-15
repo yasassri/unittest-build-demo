@@ -6,7 +6,7 @@ set -e
 ##
 
 WORKSPACE="/workspace"
-SOURCE_LOCATION="/workspace"
+SOURCE_LOCATION="/workspace/WSO2API_Test_Demo"
 
 # Functions
 function echoBold () {

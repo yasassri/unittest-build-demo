@@ -28,7 +28,7 @@
                             def workspaceLocation = pwd()
                             sh """
                                 # We can execute the maven command directly as well, but I'm using a script for this.
-                                docker run -v ${workspaceLocation}/unittest-build-demo/WSO2API_Test_Demo:/workspace --workdir /workspace ${DOCKER_IMAGE} 'sh resources/scripts/build.sh'
+                                docker run -v ${workspaceLocation}/unittest-build-demo:/workspace --workdir /workspace ${DOCKER_IMAGE} 'sh resources/scripts/build.sh'
                             """
                         }
 
